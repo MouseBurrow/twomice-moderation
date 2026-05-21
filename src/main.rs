@@ -1,42 +1,30 @@
 use axum::routing::{get, post};
-use axum::{Json, Router};
-use config::app_data::AppData;
-use config::config::Config;
-use config::logger;
+use axum::Router;
+use config::health::health_response;
+use config::server;
 use serde_json::json;
 
-async fn health() -> Json<serde_json::Value> {
-    Json(json!({ "status": "ok", "service": "moderation" }))
+async fn health() -> axum::Json<serde_json::Value> {
+    health_response("moderation")
 }
 
-async fn create_report() -> Json<serde_json::Value> {
-    Json(json!({ "status": "stub", "message": "report creation not implemented" }))
+async fn create_report() -> axum::Json<serde_json::Value> {
+    axum::Json(json!({ "status": "stub", "message": "report creation not implemented" }))
 }
 
-async fn list_reports() -> Json<serde_json::Value> {
-    Json(json!({ "status": "stub", "reports": [] }))
+async fn list_reports() -> axum::Json<serde_json::Value> {
+    axum::Json(json!({ "status": "stub", "reports": [] }))
 }
 
-async fn take_action() -> Json<serde_json::Value> {
-    Json(json!({ "status": "stub", "message": "moderation action not implemented" }))
+async fn take_action() -> axum::Json<serde_json::Value> {
+    axum::Json(json!({ "status": "stub", "message": "moderation action not implemented" }))
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    logger::init();
-
-    let config = Config::load("moderation");
-    let app_data = AppData::new(config.clone()).await?;
-    let addr = format!("0.0.0.0:{}", config.port);
-
-    let app = Router::new()
+    server::serve("moderation", Router::new()
         .route("/health", get(health))
         .route("/reports", post(create_report).get(list_reports))
         .route("/action", post(take_action))
-        .with_state(app_data);
-
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app).await?;
-
-    Ok(())
+    ).await
 }
