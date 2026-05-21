@@ -22,9 +22,12 @@ async fn take_action() -> axum::Json<serde_json::Value> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    server::serve("moderation", Router::new()
-        .route("/health", get(health))
-        .route("/reports", post(create_report).get(list_reports))
-        .route("/action", post(take_action))
-    ).await
+    server::serve(
+        "moderation",
+        Router::new()
+            .route("/health", get(health))
+            .route("/reports", post(create_report).get(list_reports))
+            .route("/action", post(take_action)),
+    )
+    .await
 }
